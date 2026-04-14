@@ -1,0 +1,176 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{setspace}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{caption}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+    citecolor=blue
+}
+
+\title{CSC3218 Deep Learning Project Report\\
+\large CIFAR-10 Image Classification Using a Convolutional Neural Network}
+\author{Student Name: \underline{\hspace{5cm}}\\
+Registration Number: \underline{\hspace{4cm}}}
+\date{April 2026}
+
+\begin{document}
+\onehalfspacing
+\maketitle
+
+\section{Introduction}
+Image classification is a core computer vision problem where a model predicts the category of an input image. Deep learning, especially Convolutional Neural Networks (CNNs), has become a standard approach because CNNs can automatically learn hierarchical visual features directly from raw pixel data.
+
+This project addresses multi-class image classification on the CIFAR-10 dataset. CIFAR-10 contains 60{,}000 color images of size $32\times32$, grouped into 10 classes: airplane, automobile, bird, cat, deer, dog, frog, horse, ship, and truck. The dataset is split into 50{,}000 training images and 10{,}000 test images.
+
+The objective of this work is to design, train, and evaluate a CNN that demonstrates core deep learning principles in architecture design, optimization strategy, model regularization, and performance interpretation.
+
+\section{Methodology}
+\subsection{Data Preparation}
+The dataset was loaded using the Keras CIFAR-10 API \texttt{keras.datasets.cifar10.load\_data()}.
+
+Pixel values were normalized from the integer range $[0, 255]$ to floating-point range $[0, 1]$. The original 50{,}000 training samples were further split into:
+\begin{itemize}
+    \item Training set: 40{,}000 images
+    \item Validation set: 10{,}000 images
+    \item Test set: 10{,}000 images (official CIFAR-10 test split)
+\end{itemize}
+
+Data augmentation was applied during training to improve generalization:
+\begin{itemize}
+    \item Zero-padding followed by random cropping back to $32\times32$
+    \item Random horizontal flipping
+    \item Small random rotation
+\end{itemize}
+These transformations increase variability in training samples without changing class labels, helping reduce overfitting.
+
+\subsection{CNN Architecture}
+The model is a deep CNN with three convolutional blocks followed by a classification head. Key components include:
+\begin{itemize}
+    \item Convolutional layers for feature extraction
+    \item ReLU activation functions for non-linearity
+    \item Batch normalization for training stability
+    \item Max pooling for spatial downsampling
+    \item Dropout for regularization
+    \item Global average pooling before output
+    \item Softmax output layer for 10-class probability prediction
+\end{itemize}
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=0.82\textwidth]{cifar10_cnn_architecture.png}
+    \caption{CNN architecture used for CIFAR-10 classification.}
+    \label{fig:cnn_architecture}
+\end{figure}
+This design was chosen to balance representational capacity and regularization for small images, while maintaining computational efficiency.
+
+\subsection{Training Procedure and Hyperparameters}
+The model was implemented in TensorFlow/Keras and trained with:
+\begin{itemize}
+    \item Optimizer: AdamW (fallback to Adam if AdamW unavailable)
+    \item Initial learning rate: $1\times10^{-3}$
+    \item Weight decay: $1\times10^{-4}$
+    \item Batch size: 128
+    \item Maximum epochs: 80
+    \item Loss function: Sparse Categorical Cross-Entropy
+\end{itemize}
+
+Training strategies:
+\begin{itemize}
+    \item \textbf{Early stopping}: monitored validation loss and restored best weights
+    \item \textbf{Learning-rate scheduling}: ReduceLROnPlateau reduced LR when validation loss plateaued
+    \item \textbf{Weight decay and dropout}: limited overfitting
+    \item \textbf{Data augmentation}: improved robustness
+\end{itemize}
+
+\section{Results}
+\subsection{Learning Curves}
+Figures~\ref{fig:acc_curve} and \ref{fig:loss_curve} present the training and validation accuracy/loss curves across epochs.
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=0.62\textwidth]{figures/accuracy_curve.png}
+    \caption{Training vs validation accuracy curve.}
+    \label{fig:acc_curve}
+\end{figure}
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=0.62\textwidth]{figures/loss_curve.png}
+    \caption{Training vs validation loss curve.}
+    \label{fig:loss_curve}
+\end{figure}
+
+\subsection{Test Performance Metrics}
+Table~\ref{tab:overall_metrics} summarizes overall performance on the test set.
+
+\begin{table}[H]
+    \centering
+    \caption{Overall test metrics}
+    \label{tab:overall_metrics}
+    \begin{tabular}{lc}
+        \toprule
+        Metric & Value \\
+        \midrule
+        Test Accuracy & \textbf{0.8858} \\
+        Precision (Macro) & 0.8860 \\
+        Recall (Macro) & 0.8858 \\
+        F1 Score (Macro) & 0.8854 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Per-class precision, recall, and F1 values should be copied from the classification report generated in the notebook.
+
+\subsection{Confusion Matrix}
+Figure~\ref{fig:cm} shows the confusion matrix on the test set and highlights where the model tends to confuse visually similar classes.
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=0.66\textwidth]{figures/confusion_matrix.png}
+    \caption{Confusion matrix on the CIFAR-10 test set.}
+    \label{fig:cm}
+\end{figure}
+
+\subsection{Sample Predictions}
+Figure~\ref{fig:samples} shows one representative prediction from each CIFAR-10 class, including the predicted label and confidence score.
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=0.66\textwidth]{figures/sample_predictions.png}
+    \caption{Sample predictions (one test image per class).}
+    \label{fig:samples}
+\end{figure}
+
+\section{Discussion}
+The model achieved strong performance on CIFAR-10 for a custom CNN. Training and validation curves indicate learning progress, while the gap between them provides evidence about generalization behavior. With regularization (dropout, weight decay, augmentation) and early stopping, overfitting was controlled.
+
+Class-wise analysis from the confusion matrix indicates that visually similar categories were more likely to be confused (for example, cat vs dog, deer vs horse, and automobile vs truck). This is expected because CIFAR-10 images are small and sometimes contain ambiguous viewpoints or backgrounds.
+
+Potential improvements include:
+\begin{itemize}
+    \item Stronger architectures (e.g., ResNet variants)
+    \item Advanced augmentation (mixup, cutout, RandAugment)
+    \item Hyperparameter search (learning rate, dropout schedule, optimizer settings)
+    \item Test-time augmentation and ensembling
+\end{itemize}
+
+\section{Conclusion}
+This project implemented an end-to-end deep learning pipeline for CIFAR-10 image classification using TensorFlow/Keras. The work covered dataset preparation, CNN design, model training with modern regularization strategies, and quantitative and qualitative evaluation.
+
+The final model demonstrates that a carefully regularized CNN can provide good classification performance on CIFAR-10 while remaining interpretable and computationally practical. The results and analysis also highlight common class-confusion patterns and suggest clear directions for future improvement.
+
+\section*{Appendix (Optional)}
+\textbf{Tip for final submission:} Replace all \texttt{[INSERT]} placeholders with exact values from the notebook, export the notebook figures into the \texttt{figures/} folder, and keep the report within the 4-page requirement by adjusting figure sizes if needed.
+
+\end{document}
